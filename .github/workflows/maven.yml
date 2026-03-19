@@ -1,22 +1,77 @@
 name: CI
  
 on:
-  push:
-    branches: [ master ]
+  release:
+    types:
+      - published
+
   pull_request:
-    branches: [ master ]
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+  workflow_dispatch:
+    inputs:
+      ref:
+        required: true
+        default: 'main'
+        type: string
+        description: 'branch / tag or commit id to build'
+      artifact-retention:
+        required: true
+        default: 7
+        type: number
+        description: 'artifact retention time in days'
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    name: Build generator
+    runs-on:
+      group: plsw-linux
+      labels: [app-builder]
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 8
-      uses: actions/setup-java@v1
+    - name: Generate token for 'Vaillant NEEXT Automation' Bot
+      id: app-token
+      uses: actions/create-github-app-token@v3
       with:
-        java-version: 8
+        app-id: ${{ secrets.VAILLANT_AUTOMATION_BOT_ID }}
+        private-key: ${{ secrets.VAILLANT_AUTOMATION_BOT_KEY }}
+        owner: ${{ github.repository_owner }}
+
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.ref }}
+        token: ${{ steps.app-token.outputs.token }}
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v5
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        
+    - name: Set up Maven
+      run: |
+        MAVEN_VERSION=3.9.6
+        wget https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+        tar xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz
+        echo "$PWD/apache-maven-${MAVEN_VERSION}/bin" >> $GITHUB_PATH
+
     - name: Build and package project
       run: mvn -f org.genivi.commonapi.core.releng/pom.xml -D target.id=org.genivi.commonapi.core.target clean verify
+
+    - name: Store artifact to action
+      uses: actions/upload-artifact@v7
+      with:
+        name: commonapi-core-generator
+        path: org.genivi.commonapi.core.cli.product/target/products/commonapi_core_generator.zip
+        if-no-files-found: error
+        retention-days: ${{ inputs.artifact-retention || 7 }}
+
+    - name: Store artifact to release
+      if: ${{ github.event_name == 'release' }}
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      run: gh release upload ${{ github.ref_name }} org.genivi.commonapi.core.cli.product/target/products/commonapi_core_generator.zip
