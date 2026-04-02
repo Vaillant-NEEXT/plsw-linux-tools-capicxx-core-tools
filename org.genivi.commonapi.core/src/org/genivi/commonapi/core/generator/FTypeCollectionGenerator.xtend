@@ -67,6 +67,36 @@ class FTypeCollectionGenerator {
         «fTypeCollection.generateVersionNamespaceBegin»
         «fTypeCollection.model.generateNamespaceBeginDeclaration»
 
+        namespace {
+
+	// Compare single element
+        template <typename T>
+        constexpr auto compareElem(const T& a, const T& b) {
+            if constexpr (std::is_floating_point_v<T>) {
+                if (std::isnan(a) && std::isnan(b)) {
+                    return std::partial_ordering::equivalent;
+                }
+            }
+
+            return a <=> b;
+        }
+
+        // Recursive tuple compare
+        template <std::size_t I = 0, typename... Ts>
+        constexpr std::partial_ordering tupleCompare(const std::tuple<Ts...>& a, const std::tuple<Ts...>& b) {
+            if constexpr (I == sizeof...(Ts)) {
+                return std::strong_ordering::equal;
+            } else {
+                auto cmp = compareElem(std::get<I>(a), std::get<I>(b));
+                if (cmp != 0) {
+                    return cmp;
+                }
+
+                return tupleCompare<I + 1>(a, b);
+            }
+        }
+        } // namespace
+
         struct «fTypeCollection.elementName» {
             «fTypeCollection.generateFTypeDeclarations(deploymentAccessor)»
 
