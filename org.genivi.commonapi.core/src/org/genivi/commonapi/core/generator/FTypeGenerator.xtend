@@ -380,13 +380,12 @@ class FTypeGenerator {
                 inline void set«element.elementName.toFirstUpper»(const «typeName» «IF typeName.isComplex»&«ENDIF»_value) { std::get< «k»>(values_) = _value; }
             «ENDFOR»
         «ENDIF»
-            inline bool operator==(const «fStructType.name»& _other) const {
-                return std::memcmp(this, &_other, sizeof(«fStructType.name»)) == 0;
+            constexpr auto operator<=>(const «fStructType.name»& _other) const {
+                return tupleCompare(values_, _other.values_);
             }
-            inline bool operator!=(const «fStructType.name» &_other) const {
-                return !((*this) == _other);
+            constexpr bool operator==(const «fStructType.name» &_other) const {
+                return (*this <=> _other) == 0;
             }
-
         };
     '''
 
@@ -648,7 +647,7 @@ class FTypeGenerator {
         if (fStructType.base !== null)
             generatedHeaders.add(fStructType.base.FTypeCollection.headerPath)
         else
-            libraryHeaders.addAll('CommonAPI/Deployment.hpp', 'CommonAPI/InputStream.hpp', 'CommonAPI/OutputStream.hpp', 'CommonAPI/Struct.hpp', 'cstring')
+            libraryHeaders.addAll('CommonAPI/Deployment.hpp', 'CommonAPI/InputStream.hpp', 'CommonAPI/OutputStream.hpp', 'CommonAPI/Struct.hpp', 'cstring', 'cmath', 'memory', 'type_traits')
         if (fStructType.polymorphic || (fStructType.hasPolymorphicBase() && fStructType.hasDerivedTypes()))
             libraryHeaders.add('CommonAPI/Export.hpp')
         fStructType.elements.forEach[type.getRequiredHeaderPath(generatedHeaders, libraryHeaders)]
