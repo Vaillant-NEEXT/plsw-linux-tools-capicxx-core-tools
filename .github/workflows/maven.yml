@@ -61,4 +61,6 @@ jobs:
 
     - name: Store artifact to release
       if: ${{ github.event_name == 'release' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: gh release upload ${{ github.ref_name }} org.genivi.commonapi.core.cli.product/target/products/commonapi_core_generator.zip
