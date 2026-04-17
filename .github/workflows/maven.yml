@@ -30,6 +30,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Generate token for 'Vaillant NEEXT Automation' Bot
+      id: app-token
+      uses: actions/create-github-app-token@v3
+      with:
+        client-id: ${{ secrets.VAILLANT_AUTOMATION_BOT_ID }}
+        private-key: ${{ secrets.VAILLANT_AUTOMATION_BOT_KEY }}
+        owner: ${{ github.repository_owner }}
+
     - name: Checkout
       uses: actions/checkout@v6
       with:
@@ -60,7 +68,8 @@ jobs:
         retention-days: ${{ inputs.artifact-retention || 7 }}
 
     - name: Store artifact to release
-      if: ${{ github.event_name == 'release' }}
+      shell: bash
+      working-directory: ${{ steps.dl-dir.outputs.path }}
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
       run: gh release upload ${{ github.ref_name }} org.genivi.commonapi.core.cli.product/target/products/commonapi_core_generator.zip
