@@ -83,7 +83,7 @@ class FTypeCollectionGenerator {
 
         // Recursive tuple compare
         template <std::size_t I = 0, typename... Ts>
-        constexpr std::partial_ordering tupleCompare(const std::tuple<Ts...>& a, const std::tuple<Ts...>& b) {
+        constexpr std::partial_ordering tupleCompare([[maybe_unused]] const std::tuple<Ts...>& a, [[maybe_unused]] const std::tuple<Ts...>& b) {
             if constexpr (I == sizeof...(Ts)) {
                 return std::strong_ordering::equal;
             } else {
