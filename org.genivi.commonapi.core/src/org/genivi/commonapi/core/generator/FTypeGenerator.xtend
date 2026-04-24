@@ -647,7 +647,7 @@ class FTypeGenerator {
         if (fStructType.base !== null)
             generatedHeaders.add(fStructType.base.FTypeCollection.headerPath)
         else
-            libraryHeaders.addAll('CommonAPI/Deployment.hpp', 'CommonAPI/InputStream.hpp', 'CommonAPI/OutputStream.hpp', 'CommonAPI/Struct.hpp', 'cstring', 'cmath', 'memory', 'type_traits')
+            libraryHeaders.addAll('CommonAPI/Deployment.hpp', 'CommonAPI/InputStream.hpp', 'CommonAPI/OutputStream.hpp', 'CommonAPI/Struct.hpp', 'cstring', 'cmath', 'memory', 'type_traits', 'compare')
         if (fStructType.polymorphic || (fStructType.hasPolymorphicBase() && fStructType.hasDerivedTypes()))
             libraryHeaders.add('CommonAPI/Export.hpp')
         fStructType.elements.forEach[type.getRequiredHeaderPath(generatedHeaders, libraryHeaders)]
